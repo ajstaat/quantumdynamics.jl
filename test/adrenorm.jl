@@ -55,3 +55,26 @@ println(poltransf(400,specparam))
 #end
 
 #println(splittest(specparamhf))
+
+function var_poltransf(D,specparam::SpectralParams,T)
+
+    #Optical Mode Coupling Strengths
+    x = [150,200,311]
+    g = total_spectral_density(specparam,x)
+
+    #Initialize f0 and choose large initial guess for f
+    f = 10*ones(length(x))
+    f0 = g
+
+    while f - f0 > 1e-8
+        f0 = f
+        d = D*exp(-(1/H^2)*sum((f0.^(2.0))*coth(x/(2*T))/x.^(2.0)))
+        f = g*(1+2*D*coth(x/(2*T))*tanh(D/T))^(-1)
+    end
+
+    return d
+
+end
+
+println(var_poltransf(400,specparam,400))
+

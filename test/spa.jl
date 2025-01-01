@@ -3,14 +3,31 @@ using QuadGK
 using Plots
 using SpecialFunctions
 
-H = 1.239*10^(-4) #\hbar 2 pi c [=] eV cm
+H = 1.239*10^(-4) #\hbar 2 pi c [=] eV cm --> this is the 1 eV/8065.56 cm⁻¹ conversion factor
 
-specparam1 = SpectralParams([0.68], [21], [0.42, 0.30, 0.42], [150,200,311], [15,13,22])
+specparam1 = SpectralParams([0.69], [22], [0.42, 0.30, 0.42], [150,200,311], [17,14,27])
 specparam_superohm = SpectralParams([0.98], [45.21], [0.0], [0.0], [0.0])
 
-#println(total_spectral_density(specparam_superohm, 100))
+#println(spectral_moment(specparam1,-1))
+#println(spectral_moment(specparam_superohm,-2))
 
-display(plot_spectral_density(specparam_superohm, 0:1000))
+#display(plot_spectral_density(specparam1, 0:1000, specparam_superohm))
+
+function plot_DW_integrand(specparam::SpectralParams, x_range, B_range)
+    fig = plot(xlabel="Frequency (cm⁻¹)", ylabel="DW(ω) (cm⁻¹)", 
+               title="DW Integrand")
+
+    for B in B_range
+        y_values = [(1/H)*(total_spectral_density(specparam, x)/x^2)*coth(B*H*x/2) for x in x_range]
+        plot!(fig, x_range, y_values, label="B = $B")
+    end
+    
+    return fig
+
+end
+
+display(plot_DW_integrand(specparam1, 0:250, 1000:10:1200))
+display(plot_DW_integrand(specparam_superohm, 0:250, 1000:10:1200))
 
 function DWintegral(specparam::SpectralParams, B)
     return quadgk(x -> (1/H)*(total_spectral_density(specparam, x)/x^2)*coth(B*H*x/2), 0, Inf)[1]
@@ -24,14 +41,14 @@ end =#
 function plot_DW(specparam::SpectralParams,specparam_superohm::SpectralParams, B_range)
     fig = plot(xlabel="1/T (K⁻¹)", ylabel="DW", 
                title="Full vs Superohmic Debye-Waller Argument")
-    Dnum_values = [DWintegral(specparam, x) for x in B_range]
-    Danaly_values = [DWintegral(specparam_superohm, x) for x in B_range]
-    plot!(fig, B_range, Dnum_values)
-    plot!(fig, B_range, Danaly_values)
+    D1_values = [DWintegral(specparam, x) for x in B_range]
+    D2_values = [DWintegral(specparam_superohm, x) for x in B_range]
+    plot!(fig, B_range, D1_values, label="Full")
+    plot!(fig, B_range, D2_values, label="Superohmic")
     return fig
 end
 
-#display(plot_DW(specparam1, specparam_superohm, 20.0:160.0))
+#display(plot_DW(specparam1, specparam_superohm, 20.0:80.0))
 
 #= function spa_lf(L, O, B)
     # Compute first integral with tanh term
